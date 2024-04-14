@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: "gatewayserver"
+  config:
+    import: "optional:configserver:http://localhost:8071/"
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true # connect to the discovery server (eureka) and forward the trafic from external clients to the microservices
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    gateway:
+      enabled: true
+  info: # info related actuator url
+    env:
+      enabled: true
+
+info: # eureka server dashboard info
+  app:
+    name: "gatewayserver"
+    description: "Spring Boot Demo Bank - Gateway Server"
+    version: "1.0.0"
