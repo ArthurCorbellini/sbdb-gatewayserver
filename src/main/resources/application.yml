@@ -8,6 +8,7 @@ spring:
       discovery:
         locator:
           enabled: true # connect to the discovery server (eureka) and forward the trafic from external clients to the microservices
+          lower-case-service-id: true
 
 management:
   endpoints:
