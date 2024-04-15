@@ -7,7 +7,7 @@ spring:
     gateway:
       discovery:
         locator:
-          enabled: true # connect to the discovery server (eureka) and forward the trafic from external clients to the microservices
+          enabled: false # hide the eureka servers paths
           lower-case-service-id: true
 
 management:
