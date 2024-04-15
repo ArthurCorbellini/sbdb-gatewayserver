@@ -27,3 +27,9 @@ info: # eureka server dashboard info
     name: "gatewayserver"
     description: "Spring Boot Demo Bank - Gateway Server"
     version: "1.0.0"
+
+logging:
+  level:
+    com:
+      artcorb:
+        gatewayserver: DEBUG
