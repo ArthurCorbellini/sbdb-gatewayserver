@@ -4,10 +4,15 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
+import org.springframework.cloud.client.circuitbreaker.Customizer;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 
 @SpringBootApplication
 public class GatewayserverApplication {
@@ -56,6 +61,30 @@ public class GatewayserverApplication {
             .uri("lb://CARDS"))
 
         .build();
+  }
+
+  /**
+   * Replace the Resilience4j default timeout of 1s.
+   * 
+   * Quando se desliga o Loans e é feita a requisição para /sbdb/accounts/api/fetchCustomerDetails,
+   * ele as vezes funciona já o retorno null de loans é mais rápido que 1 segundo do timeout padrão.
+   * 
+   * Todavia, ao desligar loans e cards e fazer a requisição para
+   * /sbdb/accounts/api/fetchCustomerDetails, o retorno é mais demorado pois ambos estão off. Por
+   * consequência o circuitbreaker do gateway é disparado (accountsCircuitBreaker), pois o timeout
+   * padrão do gateway é 1s.
+   * 
+   * Sendo assim, é preciso aumentar o timeout padrão do gateway, para que assim ele aguarde e deixe
+   * o fallback de loans e cards agir antes do circuitbreaker do gateway.
+   */
+  @Bean
+  Customizer<ReactiveResilience4JCircuitBreakerFactory> defaultCustomizer() {
+    return factory -> factory
+        .configureDefault(id -> new Resilience4JConfigBuilder(id)
+            .circuitBreakerConfig(CircuitBreakerConfig.ofDefaults())
+            .timeLimiterConfig(
+                TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(10)).build())
+            .build());
   }
 
 }
