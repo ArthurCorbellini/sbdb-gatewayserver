@@ -7,12 +7,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
 import org.springframework.cloud.client.circuitbreaker.Customizer;
+import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
+import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
 import io.github.resilience4j.timelimiter.TimeLimiterConfig;
+import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 public class GatewayserverApplication {
@@ -57,7 +60,9 @@ public class GatewayserverApplication {
 
         .route(p -> p.path("/sbdb/cards/**")
             .filters(f -> f.rewritePath("/sbdb/cards/(?<segment>.*)", "/${segment}")
-                .addResponseHeader("X-Response-Time", LocalDateTime.now().toString()))
+                .addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
+                .requestRateLimiter(cfg -> cfg.setRateLimiter(redisRateLimiter())
+                    .setKeyResolver(userKeyResolver())))
             .uri("lb://CARDS"))
 
         .build();
@@ -85,6 +90,31 @@ public class GatewayserverApplication {
             .timeLimiterConfig(
                 TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(10)).build())
             .build());
+  }
+
+  /**
+   * For each second, the user can only make one request.
+   * 
+   * - Rate Limiter pattern.
+   */
+  @Bean
+  RedisRateLimiter redisRateLimiter() {
+    return new RedisRateLimiter(1, 1, 1);
+  }
+
+  /**
+   * The method below is used to set the keyresolver by user name. With this keyresolver, redis will
+   * be able to count the number of requests per second. If the name is not present in the header,
+   * the method will set the user as "anonymous".
+   * 
+   * The code below is based on redis docs. For production eviroments, this needs to be upgraded.
+   * 
+   * - Rate Limiter pattern.
+   */
+  @Bean
+  KeyResolver userKeyResolver() {
+    return exchange -> Mono.justOrEmpty(exchange.getRequest().getHeaders().getFirst("user"))
+        .defaultIfEmpty("anonymous");
   }
 
 }

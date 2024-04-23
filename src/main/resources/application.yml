@@ -13,6 +13,12 @@ spring:
       httpclient:
         connect-timeout: 1000 # time that the gateway server is going to take to get a connection from the other microservices
         response-timeout: 5s # time that the gateway server is going to wait to receive the response from the other microservices
+  data:
+    redis:
+      connect-timeout: 2s
+      host: localhost
+      port: 6379
+      timeout: 1s
 
 management:
   endpoints:
