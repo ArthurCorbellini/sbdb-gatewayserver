@@ -22,6 +22,9 @@ public class ResponseTraceFilter {
   GlobalFilter postGlobalFilter() {
     return (exchange, chain) -> {
       return chain.filter(exchange).then(Mono.fromRunnable(() -> {
+        if (exchange.getResponse().getHeaders().containsKey(FilterUtil.CORRELATION_ID))
+          return;
+
         HttpHeaders requestHeaders = exchange.getRequest().getHeaders();
         String correlationId = filterUtil.getCorrelationId(requestHeaders);
 
