@@ -12,7 +12,7 @@ spring:
       # default param applied into all url paths of gatewayserver, minus the url that already have a circuit breaker
       httpclient:
         connect-timeout: 1000 # time that the gateway server is going to take to get a connection from the other microservices
-        response-timeout: 5s # time that the gateway server is going to wait to receive the response from the other microservices
+        response-timeout: 10s # time that the gateway server is going to wait to receive the response from the other microservices
   data:
     redis:
       connect-timeout: 2s
