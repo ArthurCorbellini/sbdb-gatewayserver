@@ -31,6 +31,9 @@ management:
   info: # info related actuator url
     env:
       enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 info: # eureka server dashboard info
   app:
